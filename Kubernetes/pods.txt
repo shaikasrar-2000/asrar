@@ -1,3 +1,10 @@
+To create a manifest file, create a directory and create manifest file.
+
+login into master server, 
+sudo -i
+mkdir kubernetes
+vi pod.yaml
+paste the below manifest file(nginix-pd.yaml) commands
 *******************************************************************
 # 1. 	core/v1
 
