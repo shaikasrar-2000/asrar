@@ -208,6 +208,8 @@ Next ::::
 		
 		https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 
+
+
 ########################
 Day 21 : 9th Jan. 2025
 ########################		
@@ -439,5 +441,431 @@ Day 22 : 15th Jan. 2025
 
 							#eg.: http://15.207.116.47:32487
 		
+
+
+########################
+Day 23 : 16th Jan. 2025
+########################
+
+
+	- Services in Kubernetes :::
+	
+		--> Used to Access the Kubernetes Pods
+
+		Services are used to enable the communication to the pods :::
+		
+		
+		- Cluster-IP Service:
+			- It is used to enable the communication between the pods within the cluster 
+		
+		- Node-Port Service 
+			- It is used to expose the pods to internet
+			- Uses the port range : 30000 to 32767 
+			- Created for each micro-service / Application-Layer
+		
+		- Load Balancer Service
+
+			- Is used to reduce the number of IPs address to be maintained for NodePort Service.
+			
+			- Load Balancer Service Created on top of the NodePort Service, will receives the request from end user thru internet and Route the request the corresponding nodeport service and access the pod within that.	
+
+			- Load Balancer Service will be created at the Application Level.			
+	
+	
+		- Ingress Controller Service :::
+		
+			- Is used to reduce the Load-Balancer Service and map the services to Load-Balancer
+			
+			- Ingress Rules 
+			
+
+		www.google.com 			- Web Application		--> DNS --> IP-Address  -- Load Balancer IP Address
+		
+		
+		Host Based Routing :::
+		
+			www.gmail.google.com 			
+			www.translate.google.com 			
+			www.maps.google.com 
+			
+		
+		Path Based Routing :::		
+		
+			www.gmail.com/inbox 
+			www.gmail.com/sent 
+			www.gmail.com/trash 
 			
 	
+
+	- Create NodePort Service for Deployment Object ::::
+
+		
+		3-tier application :
+		
+			- Front-End	Layer				# User Interface 			
+			
+			- Application-Layer 			# To Create Business Logics 
+			
+			- Back-End Data-Base Layer		# To Manage Database 
+	
+		
+		Using Docker Containers :
+		
+			Micro-Service1 - User_Sign_in Service  -  prod
+			
+				- Front-End	 			C1.1,C1.2,C1.3 
+				
+				- Application Layer 	C2.1,C2.2,C2.3 
+				
+				- DataBase Layer 		C3.1,C3.2,C3.3  	
+				
+	
+		Using Kubernetes Pods :
+	
+			Micro-Service1 - User_Sign_in Service  -  prod
+			
+			# Without Pod Replicas :::
+
+				- Front-End	 			pods-1.1
+				
+				- Application Layer 	pods-2.1
+				
+				- DataBase Layer 		pods-3.1
+				
+				
+			# With Pod Replicas :::
+			
+				- Front-End	 			pods-1.1,1.2,1.3 
+				
+				- Application Layer 	pods-2.1,2.2,2.3 
+				
+				- DataBase Layer 		pods-3.1,3.2,3.3 
+	
+	
+	
+# myappsvcdeploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loksai-eta-deploy
+  labels:
+    app: loksai-eta-deploy-lbl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: loksai-eta-app
+  template:
+    metadata:
+      labels:
+        app: loksai-eta-app
+    spec:
+      containers:
+      - name: loksai-eta-container
+        image: loksaieta/sa-mywabappsvc-img:v1.0
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loksai-eta-np-service
+  labels:
+    app: loksai-eta-np-app
+spec:
+  selector:
+    app: loksai-eta-deploy-lbl
+
+  type: NodePort
+  ports:
+  - nodePort: 31028
+    port: 8080
+    targetPort: 8080
+	
+	
+	Output ::
+	
+		- deployment object 
+		- replicaset 
+		- pod instances
+		- NodePort Service 
+	
+	
+	- Kubernetes Host Path Volume :::
+	
+		Maintain Persistant Data :::
+		
+			- Hostpath Volume is created at the pods level. Not at the Container level.
+		
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-hostpath
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      volumeMounts:
+      - mountPath: /test-mnt
+        name: test-vol
+  volumes:
+  - name: test-vol
+    hostPath:
+      path: /test-vol		
+		
+	
+	
+	====> Namespaces ::::
+	
+			- Logical Partition of the Kubernetes Cluster.
+			- This will create an isolated path for deployments
+			- Namespaces can be created based on the Environments/Teams 
+			
+			
+		Kubernetes Architecture :::							Kubernetes Architecture :::
+															
+			Non-Prod Kubernetes Master                            Prod Kubernetes Master 
+															
+				Non-Prod Kubernetes Worker_Node1,2,3,4,5	      	Prod Kubernetes Worker_Node1,2,3,4,5
+
+
+		Windows File System :
+		
+			C:/ 	
+
+				- Folder1 
+					file1
+					file2 
+
+				- Folder2 
+					file1
+					file2 
+
+	How to Automate Application Build and Deploymen to Kubernetes Cluster using Jnekins ::::
+	
+	--> Related to Project.
+	
+	
+Next Modules :::
+
+	Configuration Automation using Ansible
+	
+	Terraform Overview
+		
+	Continuous Monitoring using Prometheus and Grafana
+	
+	Overview of Devops Services on Cloud - AWS/Azure
+
+	Project Demo :::
+	
+	
+
+########################
+Day 24 : 17th Jan. 2025
+########################
+
+
+	Integrate Docker and Kubernetes as part of CICD Pipeline.
+
+pipeline {
+    agent { label 'slave1' }
+
+    stages {
+        stage('SCM_Checkout') {
+            steps {
+               echo "Perform SCM Checkout"
+			   git 'https://github.com/SA-Team-DevOps-03-Dec-24/java-mvn-springbootapp.git'			   
+            }
+        }
+        stage('Application Build') {
+            steps {
+                echo "Perform Application Build"
+				sh 'mvn clean package'
+            }
+        }
+        stage('Deploy to Test Server') {
+            steps {
+                script{
+                   sshPublisher(publishers: [sshPublisherDesc(configName: 'Tomcat-Server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: 'target/', sourceFiles: 'target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+                }
+            }
+        }
+    }
+}	
+
+
+	- To Automate Application Build and Deployment to Kubernetes Cluster using Jenkins ::::
+
+
+	Application Micro-Service --->
+	
+		- Create CICD Pipeline to Automate this Application Micro-Service using Jenkins.
+
+
+	DevOps Lead :
+	
+		- DevOps Infra-Structure Readiness 
+		
+			- Servers :::			
+			
+					Jenkins_Master 				# To Create CICD Projects and schedule to run in the slave Nodes. 
+					
+						Jenkins_SlaveNode1		# Application Build --> Create Artifacts 
+						(Build Server)			# Application Image Build --> Create Docker Image 
+												# Login to DockerHub 
+												# Push the Image to DockerHub 
+											
+					Kubernetes_Master 			# Deploy the Application Pods
+						Kubernetes_WorkNode1
+						Kubernetes_WorkNode2
+											
+		
+			- Tools in each Server :::
+
+					Jenkins_Master 				# git,jdk,jenkins 
+					
+						Jenkins_SlaveNode1		# git, jdk, maven 
+						(Build Server)			# Docker 
+								
+					Kubernetes_Master 			# 
+						Kubernetes_WorkNode1
+						Kubernetes_WorkNode2
+				
+				
+	Implementation :::
+		
+		Create and Configure :
+		
+			Jenkins_Master 				# git,jdk,jenkins 				
+				Jenkins_SlaveNode1		# git, jdk, maven 
+				(Build Server)			# Docker 
+						
+			Kubernetes_Master 			# 
+				Kubernetes_WorkNode1
+				Kubernetes_WorkNode2			
+
+
+		Integration of Servers :::				
+
+			Jenkins_Master 					
+				Jenkins_SlaveNode1				
+					(Build Server)						
+										 
+			Kubernetes_Master 						
+				Kubernetes_WorkNode1		
+				Kubernetes_WorkNode2	
+
+
+			### Integrate Jenkins Slave_Node with Jenkins Master Node using SSH 
+			
+			### Integrate Kubernetes Master_Node with Jenkins Master Node using SSH - SSH Publisher Plugins
+			
+				- Using Jenkins Master - Copy the manifest file from jenkins slave node to Kubernetes Master_Node.
+				- Jenkins Master acts as an interface between Jenkins_Slave_Node and Kubernetes Master_Node
+				
+	
+				
+		Create CICD Pipeline :
+
+			Access the DockerHub :
+			
+					--> DockerHub Login ID 			dfghfgieta
+					--> Access Token 				dfgo
+					
+				-> Create a Jenkins Credential for DockerHub Access using Dockerhub Login_ID and Access Token
+
+
+		
+			Input 	:::		github Repo URL 
+								--> Application Source Code 
+								--> pom.xml 
+								--> Dockerfile 
+								--> Kubernetes_manifest_file
+							
+							
+			Output 	::: 	Pods Deployed to Kubernetes Cluster 
+								--> *.war 
+								--> Application image published to DockerHub 
+								--> Application Pods 
+								
+								
+
+
+		CICD Pipeline :::
+		
+			Stages :
+			
+				1. SCM-Checkout 
+				
+				2. Application Build 			# Create Application Artifacts
+				
+				3. Application Image Build 		# Create Docker Image based on the Application Artifacts using Dockerfile
+				 
+				4. Login to DockerHub 
+				
+				5. Push the Application Image to DockerHub Repository 
+				
+				6. Deploy to Kubernetes Cluster 			
+	
+	
+pipeline {
+    agent { label 'slave1' }
+
+	environment {	
+		DOCKERHUB_CREDENTIALS=credentials('sadockerlogin')
+	}
+	
+    stages {
+        stage('SCM_Checkout') {
+            steps {
+               echo "Perform SCM Checkout"
+			   git 'https://github.com/SA-Team-DevOps-03-Dec-24/java-mvn-springbootapp.git'			   
+            }
+        }
+        stage('Application Build') {
+            steps {
+                echo "Perform Application Build"
+				sh 'mvn clean package'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+				sh 'docker version'
+				sh "docker build -t loksaieta/sa-mywebapp:${BUILD_NUMBER} ."
+				sh 'docker image list'
+				sh "docker tag loksaieta/sa-mywebapp:${BUILD_NUMBER} loksaieta/sa-mywebapp:latest"
+            }
+        }
+		stage('Login2DockerHub') {
+
+			steps {
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+			}
+		}
+		stage('Publish_to_Docker_Registry') {
+			steps {
+				sh "docker push loksaieta/sa-mywebapp:latest"
+			}
+		}
+        stage('Deploy to Kubernetes Cluster') {
+            steps {
+                script{
+                   sshPublisher(publishers: [sshPublisherDesc(configName: 'SA-Jan09-KMaster', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'kubectl apply -f kubedeploy.yaml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yaml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+                }
+            }
+        }
+    }
+}
+
+		kubectl create -f kubedeploy.yaml			# Create New Object. No duplication is allowed.
+	  
+		kubectl apply -f kubedeploy.yaml			# Create or replace the Kubernetes Object.
+	
+		
+
+Next :
+
+	Ansible - Configuration Management Tool 
+	
+		
